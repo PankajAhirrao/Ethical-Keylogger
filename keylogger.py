@@ -14,7 +14,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # ✅ Mailtrap SMTP Credentials
-EMAIL_ADDRESS = "5d3e92d05a2cbd"  # Replace with your Mailtrap username
+EMAIL_ADDRESS = "Your_UserName"  # Replace with your Mailtrap username
 EMAIL_PASSWORD = "Your_Password"  # Replace with your Mailtrap password
 SMTP_SERVER = "sandbox.smtp.mailtrap.io"
 SMTP_PORT = 2525
